@@ -31,6 +31,12 @@ namespace BookStoreBackend.Controllers
             var books = await _context.Books.Include(b => b.Gener).ToListAsync();
             return Ok(books);
         }
+        [HttpGet("getSome/{count}/{iter}")]
+        public async Task<ActionResult<List<Book>>> GetSomeBooks(int count, int iter)
+        {
+            var books = await _context.Books.Include(b => b.Gener).OrderByDescending(b => b.Id).Skip((iter -1)* count).Take(count).OrderBy(c => c.Id).OrderByDescending(b => b.Id).ToListAsync();
+            return Ok(books);
+        }
         [HttpGet("genre")]
         public async Task<ActionResult<List<Book>>> GetGenre()
         {
@@ -45,7 +51,7 @@ namespace BookStoreBackend.Controllers
             return Ok(genres);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("getOne/{id}")]
         public async Task<ActionResult<Book>> GetBook(int id)
         {
             var book = await _context.Books.Include(b => b.Gener).FirstOrDefaultAsync(b => b.Id == id);
