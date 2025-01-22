@@ -37,6 +37,14 @@ namespace BookStoreBackend.Controllers
             var genres = await _context.Genre.ToListAsync();
             return Ok(genres);
         }
+
+        [HttpGet("genre/five")]
+        public async Task<ActionResult<List<Book>>> GetFiveGenre()
+        {
+            var genres = await _context.Genre.Take(5).ToListAsync();
+            return Ok(genres);
+        }
+
         [HttpGet("{id}")]
         public async Task<ActionResult<Book>> GetBook(int id)
         {
