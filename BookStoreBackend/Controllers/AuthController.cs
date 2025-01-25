@@ -27,7 +27,7 @@ namespace BookStoreBackend.Controllers
         public async Task<ActionResult<UserWithTokenDTO>> Login(ToLoginDTO login)
         {
 
-            var user = await _context.Users.FirstAsync(u => u.Login == login.Login && u.Password == login.Pasword);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Login == login.Login && u.Password == login.Pasword);
             if (user is null) return NotFound("User not found");
 
             await _context.Entry(user)
@@ -39,7 +39,6 @@ namespace BookStoreBackend.Controllers
                 Email = user.Email,
                 Login = user.Login,
                 Name = user.Name,
-                Password = user.Password,
                 Phone = user.Phone,
                 Role = user.Role,
                 Token = JwtBearer.CreateToken(_configuration, user),
@@ -52,7 +51,8 @@ namespace BookStoreBackend.Controllers
         [HttpPost("registr")]
         public async Task<ActionResult<UserWithTokenDTO>> CreateUser([FromBody] CreateUserDTO user)
         {
-
+            var usercheck = await _context.Users.FirstOrDefaultAsync(u => u.Login == user.Login || u.Email == user.Email || u.Phone == user.Phone);
+            if (usercheck is not null) return NotFound("User allready exist");
             var userToAdd = new User
             {
                 Login = user.Login,
@@ -74,7 +74,6 @@ namespace BookStoreBackend.Controllers
                 Email = userAdded.Email,
                 Login = userAdded.Login,
                 Name = userAdded.Name,
-                Password = userAdded.Password,
                 Phone = userAdded.Phone,
                 Role = userAdded.Role,
                 Token = JwtBearer.CreateToken(_configuration, userAdded),
@@ -90,6 +89,9 @@ namespace BookStoreBackend.Controllers
             if (identity is null) return NotFound("User not found");
             var role = identity.Claims.FirstOrDefault(o => o.Type == ClaimTypes.Role)?.Value;
             if (role == "user") return Unauthorized("You are not admin");
+
+            var usercheck = await _context.Users.FirstOrDefaultAsync(u => u.Login == user.Login || u.Email == user.Email || u.Phone == user.Phone);
+            if (usercheck is not null) return NotFound("User allready exist");
 
             var userToAdd = new User
             {
@@ -112,7 +114,6 @@ namespace BookStoreBackend.Controllers
                 Email = userAdded.Email,
                 Login = userAdded.Login,
                 Name = userAdded.Name,
-                Password = userAdded.Password,
                 Phone = userAdded.Phone,
                 Role = userAdded.Role,
                 Token = JwtBearer.CreateToken(_configuration, userAdded),

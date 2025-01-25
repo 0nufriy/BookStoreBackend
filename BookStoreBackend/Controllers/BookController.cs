@@ -37,6 +37,47 @@ namespace BookStoreBackend.Controllers
             var books = await _context.Books.Include(b => b.Gener).OrderByDescending(b => b.Id).Skip((iter -1)* count).Take(count).OrderBy(c => c.Id).OrderByDescending(b => b.Id).ToListAsync();
             return Ok(books);
         }
+
+        [HttpGet("getCataloge/")]
+        public async Task<ActionResult<List<Book>>> GetCataloges(
+            [FromQuery]int count, 
+            [FromQuery] int iter, 
+            [FromQuery] int minPrice, 
+            [FromQuery] int maxPrice, 
+            [FromQuery] int genreId, 
+            [FromQuery] string sort, 
+            [FromQuery] string search = "")
+        {
+            var books = await _context.Books.Include(b => b.Gener).Where(b => b.Price <=maxPrice && b.Price >= minPrice).ToListAsync();
+            if (genreId > 0)
+            {
+                books = books.Where(b => b.GenreId == genreId).ToList();
+            }
+            if(search.Length >= 3)
+            {
+                books = books.Where(b => b.BookName.ToLower().Contains(search.ToLower())).ToList();
+            }
+            switch(sort)
+            {
+                case "price_asc":
+                    books = books.OrderBy(b => b.Price).Skip((iter - 1) * count).Take(count).OrderBy(b => b.Price).ToList();
+                    break;
+                case "price_desc":
+                    books = books.OrderByDescending(b => b.Price).Skip((iter - 1) * count).Take(count).OrderByDescending(b => b.Price).ToList();
+                    break;
+                case "newest":
+                    books = books.OrderByDescending(b => b.Id).Skip((iter - 1) * count).Take(count).OrderByDescending(b => b.Id).ToList();
+                    break;
+                case "oldest":
+                    books = books.OrderBy(b => b.Id).Skip((iter - 1) * count).Take(count).OrderBy(b => b.Id).ToList();
+                    break;
+                default:
+                    books = books.OrderByDescending(b => b.Id).Skip((iter - 1) * count).Take(count).OrderByDescending(b => b.Id).ToList();
+                    break;
+            }
+            return Ok(books);
+        }
+
         [HttpGet("genre")]
         public async Task<ActionResult<List<Book>>> GetGenre()
         {
