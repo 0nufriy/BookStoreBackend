@@ -57,6 +57,7 @@ namespace BookStoreBackend.Controllers
             {
                 books = books.Where(b => b.BookName.ToLower().Contains(search.ToLower())).ToList();
             }
+
             switch(sort)
             {
                 case "price_asc":
@@ -105,7 +106,7 @@ namespace BookStoreBackend.Controllers
         public async Task<ActionResult<Book>> CreateBook([FromBody]CreateBookDTO createBookDTO)
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;
-            if (identity is null) return NotFound("User not found");
+            if (identity is null) return Unauthorized("User not found");
             var role = identity.Claims.FirstOrDefault(o => o.Type == ClaimTypes.Role)?.Value;
             if (role == "user") return Unauthorized("You are not admin");
 
@@ -133,7 +134,7 @@ namespace BookStoreBackend.Controllers
         public async Task<ActionResult<Book>> CreateGenre([FromBody] string genreName)
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;
-            if (identity is null) return NotFound("User not found");
+            if (identity is null) return Unauthorized("User not found");
             var role = identity.Claims.FirstOrDefault(o => o.Type == ClaimTypes.Role)?.Value;
             if (role == "user") return Unauthorized("You are not admin");
 
@@ -150,7 +151,7 @@ namespace BookStoreBackend.Controllers
         public async Task<ActionResult<Book>> RemoveGenre(int id)
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;
-            if (identity is null) return NotFound("User not found");
+            if (identity is null) return Unauthorized("User not found");
             var role = identity.Claims.FirstOrDefault(o => o.Type == ClaimTypes.Role)?.Value;
             if (role == "user") return Unauthorized("You are not admin");
 
@@ -167,7 +168,7 @@ namespace BookStoreBackend.Controllers
         public async Task<ActionResult<Book>> UpdateBook([FromBody] UpdateBookDTO updateBookDTO)
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;
-            if (identity is null) return NotFound("User not found");
+            if (identity is null) return Unauthorized("User not found");
             var role = identity.Claims.FirstOrDefault(o => o.Type == ClaimTypes.Role)?.Value;
             if (role == "user") return Unauthorized("You are not admin");
 
@@ -193,7 +194,7 @@ namespace BookStoreBackend.Controllers
         public async Task<ActionResult<Book>> DeleteBook(int id)
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;
-            if (identity is null) return NotFound("User not found");
+            if (identity is null) return Unauthorized("User not found");
             var role = identity.Claims.FirstOrDefault(o => o.Type == ClaimTypes.Role)?.Value;
             if (role == "user") return Unauthorized("You are not admin");
 

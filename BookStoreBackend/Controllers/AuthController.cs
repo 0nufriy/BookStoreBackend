@@ -3,6 +3,7 @@ using BookStoreBackend.Entities;
 using BookStoreBackend.Jwt;
 using BookStoreBackend.Models.AuthController;
 using BookStoreBackend.Models.UserController;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -82,11 +83,12 @@ namespace BookStoreBackend.Controllers
 
             return Ok(userWithToken);
         }
+        [Authorize]
         [HttpPost("registrAdmin")]
         public async Task<ActionResult<UserWithTokenDTO>> CreateAdmin([FromBody] CreateUserDTO user)
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;
-            if (identity is null) return NotFound("User not found");
+            if (identity is null) return Unauthorized("User not found");
             var role = identity.Claims.FirstOrDefault(o => o.Type == ClaimTypes.Role)?.Value;
             if (role == "user") return Unauthorized("You are not admin");
 
