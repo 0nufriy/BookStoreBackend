@@ -5,5 +5,6 @@
         Pending,
         Processing,
         Shipped,
+        Cancel
     }
 }

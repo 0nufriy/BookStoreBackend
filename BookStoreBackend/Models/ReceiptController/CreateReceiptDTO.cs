@@ -6,6 +6,6 @@ namespace BookStoreBackend.Models.ReceiptController
     {
         public required int AddressId { get; set; }
 
-        public required List<BookReceipDTO> Books { get; set; }
+        public required List<BookCreateReceipDTO> Books { get; set; }
     }
 }

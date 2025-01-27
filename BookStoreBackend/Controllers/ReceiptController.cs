@@ -43,8 +43,25 @@ namespace BookStoreBackend.Controllers
                 receipt = await _context.Receipt
                     .Include(r => r.Books)
                     .ThenInclude(br => br.Book)
-                    .Select(r => new ReceiptDTO { Id = r.Id, Address = r.Address, Books = r.Books, Status = r.Status, UserId = r.UserId })
-                    .Where(r => r.UserId == id).ToListAsync();
+                    .Select(r => new ReceiptDTO 
+                    { 
+                        Id = r.Id, 
+                        Address = r.Address, 
+                        Books = r.Books.Select(b => new BookInReceiptDTO 
+                        { 
+                            Autor = b.Book.Autor,
+                            Id = b.BookId,
+                            BookName = b.Book.BookName,
+                            Count = b.Count,
+                            Image = b.Book.Image,
+                            Price = b.Book.Price
+                        }).ToList(), 
+                        Status = r.Status, 
+                        UserId = r.UserId 
+                    })
+                    .Where(r => r.UserId == id)
+                    .OrderByDescending(r => r.Id)
+                    .ToListAsync();
             }
             else
             {
@@ -56,11 +73,20 @@ namespace BookStoreBackend.Controllers
                     {
                         Id = r.Id,
                         Address = r.Address,
-                        Books = r.Books,
+                        Books = r.Books.Select(b => new BookInReceiptDTO
+                        {
+                            Autor = b.Book.Autor,
+                            Id = b.BookId,
+                            BookName = b.Book.BookName,
+                            Count = b.Count,
+                            Image = b.Book.Image,
+                            Price = b.Book.Price
+                        }).ToList(),
                         Status = r.Status,
                         UserId = r.UserId,
                         User = new UserDataDTO { Email = r.User.Email, Id = r.User.Id, Login = r.User.Login, Name = r.User.Name, Phone = r.User.Phone, Role = r.User.Role }
                     })
+                    .OrderByDescending(r => r.Id)
                     .ToListAsync();
             }
 
@@ -77,14 +103,22 @@ namespace BookStoreBackend.Controllers
             var role = identity.Claims.FirstOrDefault(o => o.Type == ClaimTypes.Role)?.Value;
             var UserId = Convert.ToInt32(identity.Claims.FirstOrDefault(o => o.Type == ClaimTypes.Sid)?.Value);
 
-            var receipt = await _context.Receipt.Include(b => b.Books).Include(b => b.User).FirstOrDefaultAsync(r => r.Id == id);
+            var receipt = await _context.Receipt.Include(b => b.Books).ThenInclude(b => b.Book).Include(b => b.User).FirstOrDefaultAsync(r => r.Id == id);
             if (receipt is null || (role == "user" && UserId != receipt.UserId)) return NotFound("Receipt not found");
 
             var receiptDTO = new ReceiptDTO
             {
                 Id = receipt.Id,
                 Address = receipt.Address,
-                Books = receipt.Books,
+                Books = receipt.Books.Select(b => new BookInReceiptDTO
+                {
+                    Autor = b.Book.Autor,
+                    Id = b.BookId,
+                    BookName = b.Book.BookName,
+                    Count = b.Count,
+                    Image = b.Book.Image,
+                    Price = b.Book.Price
+                }).ToList(),
                 Status = receipt.Status,
                 UserId = receipt.UserId,
                 User = new UserDataDTO { Email = receipt.User.Email, Id = receipt.User.Id, Login = receipt.User.Login, Name = receipt.User.Name, Phone = receipt.User.Phone, Role = receipt.User.Role }
@@ -147,19 +181,31 @@ namespace BookStoreBackend.Controllers
             var receipt = await _context.Receipt.Include(r => r.Books).Include(r => r.User).FirstOrDefaultAsync(r => r.Id == receiptId);
             if (receipt is null) return NotFound("Receipt not found");
 
+            if(receipt.Status != StatusEnum.Pending && status == StatusEnum.Cancel) return NotFound("Can not cancel this receipt");
+
             receipt.Status = status;
             await _context.SaveChangesAsync();
 
 
             await _context.Entry(receipt)
                     .Collection(re => re.Books)
+                    .Query()
+                    .Include(b=> b.Book)
                     .LoadAsync();
 
             var receiptDTO = new ReceiptDTO
             {
                 Id = receipt.Id,
                 Address = receipt.Address,
-                Books = receipt.Books,
+                Books = receipt.Books.Select(b => new BookInReceiptDTO
+                {
+                    Autor = b.Book.Autor,
+                    Id = b.BookId,
+                    BookName = b.Book.BookName,
+                    Count = b.Count,
+                    Image = b.Book.Image,
+                    Price = b.Book.Price
+                }).ToList(),
                 Status = receipt.Status,
                 UserId = receipt.UserId,
                 User = new UserDataDTO { Email = receipt.User.Email, Id = receipt.User.Id, Login = receipt.User.Login, Name = receipt.User.Name, Phone = receipt.User.Phone, Role = receipt.User.Role }
