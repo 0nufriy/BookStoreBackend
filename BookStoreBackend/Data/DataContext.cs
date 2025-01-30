@@ -16,6 +16,7 @@ namespace BookStoreBackend.Data
         public DbSet<Book> Books { get; set; }
         public DbSet<Receipt> Receipt { get; set; }
         public DbSet<Genre> Genre { get; set; }
+        public DbSet<Comment> Comment { get; set; }
 
     }
 }

@@ -160,7 +160,7 @@ namespace BookStoreBackend.Controllers
             return Ok(userDTO);
         }
 
-        [HttpDelete("Delete/{addressId}")]
+        [HttpDelete("address/{addressId}")]
         public async Task<ActionResult<UserDataDTO>> DelleteAddress(int addressId)
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;

@@ -1,11 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using BookStoreBackend.Entities;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 
-namespace BookStoreBackend.Entities
+namespace BookStoreBackend.Models.BookController
 {
-    public class Book
+    public class GetBookWithComentDTO
     {
-        [Key]
         public int Id { get; set; }
         public required int GenreId { get; set; }
         public required string BookName { get; set; }
@@ -18,9 +18,7 @@ namespace BookStoreBackend.Entities
         public required string Image { get; set; }
         public required int Price { get; set; }
         public required int Stock { get; set; }
-        [ForeignKey("GenreId")]
         public Genre Gener { get; set; }
-        public ICollection<Comment> Comments{ get; set; } = new List<Comment>();
-
+        public ICollection<CommentDTO> Comments { get; set; } = new List<CommentDTO>();
     }
 }

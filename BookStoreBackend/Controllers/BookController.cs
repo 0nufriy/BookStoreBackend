@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.SqlServer.Server;
+using System.Reflection.Metadata;
 using System.Security.Claims;
 using static System.Net.Mime.MediaTypeNames;
 
@@ -94,11 +95,35 @@ namespace BookStoreBackend.Controllers
         }
 
         [HttpGet("getOne/{id}")]
-        public async Task<ActionResult<Book>> GetBook(int id)
+        public async Task<ActionResult<GetBookWithComentDTO>> GetBook(int id)
         {
-            var book = await _context.Books.Include(b => b.Gener).FirstOrDefaultAsync(b => b.Id == id);
+            var book = await _context.Books.Include(b => b.Gener).Include(b => b.Comments).ThenInclude(u => u.User).FirstOrDefaultAsync(b => b.Id == id);
             if (book is null) return NotFound("Book not found");
-            return Ok(book);
+
+            var bookStruct = new GetBookWithComentDTO
+            {
+                Id = book.Id,
+                Description = book.Description,
+                Stock = book.Stock,
+                Autor = book.Autor,
+                BookName = book.BookName,
+                Cover = book.Cover,
+                Format = book.Format,
+                Gener = book.Gener,
+                GenreId = book.GenreId,
+                Image = book.Image,
+                Isbn = book.Isbn,
+                Pagecount = book.Pagecount,
+                Price = book.Price,
+                Comments = book.Comments.Select(c => new CommentDTO
+                {
+                    Id = c.CommentId,
+                    Message = c.Message,
+                    UserName = c.User.Login
+                }).ToList()
+            };
+
+            return Ok(bookStruct);
         }
 
         [Authorize]
@@ -204,6 +229,46 @@ namespace BookStoreBackend.Controllers
 
             await _context.SaveChangesAsync();
             return Ok();
+        }
+
+        [Authorize]
+        [HttpDelete("comment/{id}")]
+        public async Task<ActionResult> RemoveComment(int id)
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            if (identity is null) return Unauthorized("User not found");
+            var role = identity.Claims.FirstOrDefault(o => o.Type == ClaimTypes.Role)?.Value;
+            if (role == "user") return Unauthorized("You are not admin");
+
+            var comment = await _context.Comment.FindAsync(id);
+            if (comment is null) return NotFound("Comment is not found");
+
+            _context.Comment.Remove(comment);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [Authorize]
+        [HttpPost("comment/")]
+        public async Task<ActionResult<CommentDTO>> CreateComment(CreateCommentDTO request)
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            if (identity is null) return Unauthorized("User not found");
+            var UserId = Convert.ToInt32(identity.Claims.FirstOrDefault(o => o.Type == ClaimTypes.Sid)?.Value);
+            var user = await _context.Users.Include(u => u.Addresses).FirstOrDefaultAsync(u => u.Id == UserId);
+            if (user is null) return Unauthorized("User not found");
+
+            var comment = new Comment 
+            { 
+                BookId = request.BookId, 
+                Message = request.Message, 
+                UserId = UserId 
+            };
+
+            _context.Comment.Add(comment);
+            await _context.SaveChangesAsync();
+            var commentDTO = new CommentDTO { Id = comment.CommentId, Message = comment.Message, UserName = comment.User.Login };
+            return Ok(commentDTO);
         }
     }
 }
